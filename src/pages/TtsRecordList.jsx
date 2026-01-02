@@ -1,112 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { styles } from "../style/style";
 
 function TtsRecordList() {
-  const styles = {
-    container: {
-      maxWidth: "600px",
-      margin: "50px auto",
-      padding: "30px",
-      backgroundColor: "#ffffff",
-      borderRadius: "8px",
-      boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
-    },
-    form: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "20px",
-    },
-    fieldGroup: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "8px",
-    },
-    label: {
-      fontSize: "14px",
-      fontWeight: "500",
-      color: "#333",
-    },
-    required: {
-      color: "#e74c3c",
-      marginLeft: "4px",
-    },
-    input: {
-      padding: "10px 12px",
-      fontSize: "16px",
-      border: "1px solid #ddd",
-      borderRadius: "4px",
-      outline: "none",
-      transition: "border-color 0.2s",
-    },
-    textarea: {
-      padding: "10px 12px",
-      fontSize: "16px",
-      border: "1px solid #ddd",
-      borderRadius: "4px",
-      outline: "none",
-      minHeight: "120px",
-      resize: "vertical",
-      fontFamily: "inherit",
-      transition: "border-color 0.2s",
-    },
-    button: {
-      padding: "12px 24px",
-      fontSize: "16px",
-      fontWeight: "500",
-      color: "#ffffff",
-      backgroundColor: "#3498db",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer",
-      transition: "background-color 0.2s",
-      marginTop: "10px",
-    },
-    loader: {
-      marginTop: "20px",
-      textAlign: "center",
-      fontWeight: "500",
-      color: "#3498db",
-    },
-    imageContainer: {
-      textAlign: "center",
-      marginTop: "30px",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-    },
-    image: {
-      width: "200px",
-      height: "200px",
-      objectFit: "contain",
-      border: "1px solid #ddd",
-      borderRadius: "8px",
-    },
-    downloadBtn: {
-      display: "inline-block",
-      marginTop: "15px",
-      padding: "10px 20px",
-      backgroundColor: "#2ecc71",
-      color: "#fff",
-      textDecoration: "none",
-      borderRadius: "4px",
-      fontWeight: "500",
-    },
-    saveButton: {
-      display: "inline-block",
-      marginTop: "15px",
-      padding: "10px 20px",
-      backgroundColor: "#2a89d1ff",
-      color: "#fff",
-      textDecoration: "none",
-      borderRadius: "4px",
-      fontWeight: "500",
-    },
-    audio_container: {
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-    }
-  };
   const [records, setRecords] = useState([]);
   const [pageLength, setPageLength] = useState(10);
   const [pageNumber, setPageNumber] = useState(1);
@@ -125,16 +21,51 @@ function TtsRecordList() {
   const [showFullTextModal, setShowFullTextModal] = useState(false);
   const [fullTextContent, setFullTextContent] = useState("");
   const [fullTextTitle, setFullTextTitle] = useState("");
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [selectedAudioPk, setSelectedAudioPk] = useState(null);
 
   // Listen Modal State (Removed) - refactoring to Update Modal
   const [selectedListenUrl, setSelectedListenUrl] = useState(null);
   const [selectedListenLoading, setSelectedListenLoading] = useState(false);
   const updateTextareaRef = useRef(null);
-
+  const metaImageRef = useRef(null);
   const [customPronunciation, setCustomPronunciation] = useState(false);
   const [speechWord, setSpeechWord] = useState("");
   const [speechPronunciation, setSpeechPronunciation] = useState("");
   const [selectCustomAddLoading, setSelectCustomAddLoading] = useState(false);
+
+  //meta details
+  const [metaTabVisible, setMetaTabVisible] = useState(false);
+  const [language, setLanguage] = useState();
+  const [audioDescription, setAudioDescription] = useState("null");
+  const [thumbnailUrl, setThumbnailUrl] = useState(false);
+  const [metaKeywords, setMetaKeywords] = useState(null);
+  const [metaTitle, setMetaTitle] = useState(null);
+  const [metaDesc, setMetaDesc] = useState(null);
+  const [metaThumbnailAltText, setMetaThumbnailAltText] = useState(null);
+  const [metaRowId, setMetaRowId] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUserRole, setCurrentUserRole] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("tts_currentUser"));
+    const role = JSON.parse(localStorage.getItem("tts_currentUserRole"));
+    if (user) {
+      setCurrentUser(user);
+    }
+    if (role) {
+      setCurrentUserRole(role);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("tts_currentUser");
+    localStorage.removeItem("tts_currentUserRole");
+    navigate("/login");
+  };
+
+
 
   const addCustomPronunciation = async () => {
     setSelectCustomAddLoading(true);
@@ -209,13 +140,46 @@ function TtsRecordList() {
 
   const openUpdateModal = (record) => {
     setSelectedRecord(record);
+    setSelectedAudioPk(record.tts_id);
     setUpdateText(record.tts_text);
     setPreviewAudioUrl(null); // Reset preview
     setSelectedListenUrl(null); // Reset selected listen
     setShowUpdateModal(true);
   };
 
+  const uploadThumbnail = async () => {
+    let imageFile = metaImageRef.current.files[0]; // Access the actual file object
+    if (!imageFile) {
+      alert("No file selected");
+      return;
+    }
+    const formData = new FormData();
+    formData.append('thumbnail', imageFile);
+    formData.append('id', metaRowId);
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/image-upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        let imageFilename = result.imageFilename;
+        let imageUrl = `${imageFilename}`;
+        setThumbnailUrl(imageUrl);
+        alert('Thumbnail uploaded. Please update the Alt Text.');
+      } else {
+        const errorData = await response.json();
+        console.error("Upload failed:", errorData.msg);
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+    }
+  };
+
   const openFullTextModal = (record) => {
+    console.log(record);
     setFullTextContent(record.tts_text);
     setFullTextTitle(record.title);
     setShowFullTextModal(true);
@@ -253,6 +217,7 @@ function TtsRecordList() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       setPreviewAudioUrl(url);
+      setAudioBlob(blob);
 
     } catch (err) {
       console.error("Preview error:", err);
@@ -293,6 +258,38 @@ function TtsRecordList() {
       setUpdating(false);
     }
   };
+
+  const handleUpdateV2 = async () => {
+    if (!audioBlob) {
+      alert("No audio to save");
+      return;
+    }
+
+    setUpdating(true);
+
+    const formdata = new FormData();
+    formdata.append("text", updateText);
+    formdata.append("id", selectedAudioPk);
+    formdata.append("audio", audioBlob);
+    try {
+      const requestOptions = {
+        method: "POST",
+        body: formdata,
+      };
+      await fetch(
+        `${process.env.REACT_APP_BACKENDURL}/tts/update`,
+        requestOptions
+      );
+      alert("Audio updated successfully");
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setUpdating(false);
+      fetchRecords();
+    }
+
+
+  }
 
   const downloadImage = (url, filename) => {
     const proxyUrl =
@@ -351,51 +348,49 @@ function TtsRecordList() {
     }
   };
 
-  // const handleListenSelected_DELETED = async () => {
-  //   const textarea = listenTextareaRef.current;
-  //   if (!textarea) return;
+  const openMetaTab = (rec) => {
+    console.log(rec);
+    setMetaTitle(rec.title);
+    setMetaDesc(rec.description || "");
+    setMetaKeywords(rec.keywords || "");
+    setThumbnailUrl(rec.thumbnail || "");
+    setMetaThumbnailAltText(rec.thumbnail_alt || "");
+    setMetaRowId(rec.tts_id || "");
+    setMetaTabVisible(true);
+  }
 
-  //   const start = textarea.selectionStart;
-  //   const end = textarea.selectionEnd;
+  const updateMetaDataByRowId = async () => {
+    // console.log(metaTitle,metaThumbnailAltText,metaDesc,metaKeywords,metaRowId);
+    let sanitized_metaTitle = metaTitle.trim();
+    let sanitized_metaThumbnailAltText = metaThumbnailAltText.trim();
+    let sanitized_metaDesc = metaDesc.trim();
+    let sanitized_metaKeywords = metaKeywords.trim();
 
-  //   if (start === end) {
-  //     alert("Please select some text to listen to.");
-  //     return;
-  //   }
+    let reqestOption = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: sanitized_metaTitle,
+        alt_text: sanitized_metaThumbnailAltText,
+        desc: sanitized_metaDesc,
+        keywords: sanitized_metaKeywords,
+        id: metaRowId
+      })
+    }
+    try {
+      let res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/update-data`, reqestOption);
+      if (res.ok) {
+        alert("Data updated.");
+        setMetaTabVisible(false);
+        fetchRecords();
+      } else {
+        alert("Error occures while updating data.");
+      }
+    } catch (error) {
+      alert("Error occures while updating data." + error);
+    }
+  }
 
-  //   const selectedText = listenText.substring(start, end);
-  //   if (!selectedText.trim()) return;
-
-  //   setListenLoading(true);
-  //   setListenPreviewUrl(null);
-
-  //   try {
-  //     const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/create`, {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({
-  //         title: "Preview", // generic title for preview
-  //         text: selectedText,
-  //         voice: "bn-IN-Wavenet-A",
-  //         language: "bn-IN",
-  //         speakingRate: 1.0,
-  //         pitch: 0.0
-  //       }),
-  //     });
-
-  //     const data = await res.json();
-  //     if (res.ok) {
-  //       setListenPreviewUrl(data.audio.url);
-  //     } else {
-  //       alert("Preview failed: " + (data.error || "Server error"));
-  //     }
-  //   } catch (err) {
-  //     console.error("Preview error:", err);
-  //     alert("Preview failed");
-  //   } finally {
-  //     setListenLoading(false);
-  //   }
-  // };
 
 
   return (
@@ -414,6 +409,36 @@ function TtsRecordList() {
       >
         ➕ Add New TTS Record
       </Link>
+      <div style={{ display: "flex", gap: "10px", float: "right" }}>
+        {currentUserRole === 'ADMIN' && (
+          <Link
+            to="/create-user"
+            style={{
+              textDecoration: "none",
+              background: "#2ecc71",
+              color: "#fff",
+              padding: "10px 20px",
+              borderRadius: "8px",
+            }}
+          >
+            Add New User
+          </Link>
+        )}
+        <button
+          onClick={handleLogout}
+          style={{
+            background: "#e74c3c",
+            color: "#fff",
+            padding: "10px 20px",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "16px"
+          }}
+        >
+          Logout
+        </button>
+      </div>
 
       <h2 style={{ marginBottom: "15px" }}>TTS Records</h2>
 
@@ -541,7 +566,20 @@ function TtsRecordList() {
                             cursor: "pointer",
                           }}
                         >
-                          Edit
+                          Edit Audio
+                        </button>
+                        <button
+                          onClick={() => openMetaTab(rec)}
+                          style={{
+                            background: "#10b981",
+                            color: "#fff",
+                            border: "none",
+                            padding: "5px 10px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Edit Meta
                         </button>
                       </td>
                     </tr>
@@ -833,7 +871,7 @@ function TtsRecordList() {
                 Cancel
               </button>
               <button
-                onClick={handleUpdate}
+                onClick={handleUpdateV2}
                 disabled={updating}
                 style={{
                   padding: "10px 20px",
@@ -850,6 +888,78 @@ function TtsRecordList() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {metaTabVisible && (
+        <div style={{
+          position: "fixed",
+          background: '#fff',
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          backgroundColor: "rgba(0,0,0,0.5)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "#fff",
+            padding: "20px",
+            borderRadius: "8px",
+            width: "90%",
+            maxWidth: "600px",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+          }}>
+            <div style={styles.updateData.parent_div}>
+              <label htmlFor="" style={styles.updateData.div_label}>Title</label>
+              <input type="text" placeholder="" value={metaTitle} onChange={(e) => { setMetaTitle(e.target.value) }} style={styles.updateData.div_input_text} />
+            </div>
+            <div>
+              <label htmlFor="" style={styles.updateData.div_label}>Thumbnail</label>
+              {!thumbnailUrl && (
+                <div>
+                  <div>
+                    <input ref={metaImageRef} type="file" style={styles.updateData.div_input_file} /></div>
+                  <div>
+                    <button onClick={(e) => { uploadThumbnail(records) }} style={styles.updateData.div_button}>Upload</button>
+                  </div>
+                </div>
+              )}
+              {thumbnailUrl && (
+                <div>
+                  <div style={{ width: "50%", margin: "auto 10px" }}>
+                    <img style={{ width: "100%" }} src={`${process.env.REACT_APP_ASSET_URL}/images/${thumbnailUrl}`} />
+                  </div>
+                  <div>
+                    <input type="text" value={metaThumbnailAltText} onChange={(e) => { setMetaThumbnailAltText(e.target.value) }} placeholder="Alt Text" style={styles.updateData.div_input_text} />
+                  </div>
+                  <div>
+                    <button onClick={(e) => { setThumbnailUrl(null); setMetaThumbnailAltText(null) }} style={{ margin: "5px 0px", outline: "none", fontSize: "18px", padding: "10px 20px" }}>
+                      Update Thumbnail
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div style={styles.updateData.parent_div}>
+              <label htmlFor="" style={styles.updateData.div_label} >Description</label>
+              <textarea name="" id="" value={metaDesc} onChange={(e) => { setMetaDesc(e.target.value) }} placeholder="Short description. the story is about for......" style={styles.updateData.div_input_text_area}></textarea>
+            </div>
+            <div style={styles.updateData.parent_div}>
+              <label htmlFor="" style={styles.updateData.div_label} >Keywords</label>
+              <input type="text" value={metaKeywords} onChange={(e) => { setMetaKeywords(e.target.value) }} placeholder="eg: virat kohli, cricket" style={styles.updateData.div_input_text} />
+            </div>
+            <div style={styles.updateData.parent_div}>
+              <button style={styles.updateData.div_button_update} onClick={(e) => { updateMetaDataByRowId() }}>Update</button>
+              <button onClick={(e) => { setMetaTabVisible(false) }} style={styles.updateData.div_button_close}>Close</button>
+            </div>
+          </div>
+
         </div>
       )}
     </div>

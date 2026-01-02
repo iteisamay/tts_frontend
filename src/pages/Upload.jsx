@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
+import { styles } from '../style/style'
 function Upload() {
   const [title, setTitle] = useState("");
   const [textToSpeech, setTextToSpeech] = useState("");
@@ -20,6 +20,26 @@ function Upload() {
   const [selectCustomAddLoading, setSelectCustomAddLoading] = useState(false);
   const [speechWord, setSpeechWord] = useState("");
   const [speechPronunciation, setSpeechPronunciation] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUserRole, setCurrentUserRole] = useState(null);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("tts_currentUser"));
+    const role = JSON.parse(localStorage.getItem("tts_currentUserRole"));
+    if (user) {
+      setCurrentUser(user);
+    }
+    if (role) {
+      setCurrentUserRole(role);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("tts_currentUser");
+    localStorage.removeItem("tts_currentUserRole");
+    navigate("/login");
+  };
+
   const enableCustomInput = () => {
     setCustomPronunciation(true);
   };
@@ -62,111 +82,6 @@ function Upload() {
       }
     };
   }, [audioUrl]);
-  const styles = {
-    container: {
-      maxWidth: "600px",
-      margin: "50px auto",
-      padding: "30px",
-      backgroundColor: "#ffffff",
-      borderRadius: "8px",
-      boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
-    },
-    form: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "20px",
-    },
-    fieldGroup: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "8px",
-    },
-    label: {
-      fontSize: "14px",
-      fontWeight: "500",
-      color: "#333",
-    },
-    required: {
-      color: "#e74c3c",
-      marginLeft: "4px",
-    },
-    input: {
-      padding: "10px 12px",
-      fontSize: "16px",
-      border: "1px solid #ddd",
-      borderRadius: "4px",
-      outline: "none",
-      transition: "border-color 0.2s",
-    },
-    textarea: {
-      padding: "10px 12px",
-      fontSize: "16px",
-      border: "1px solid #ddd",
-      borderRadius: "4px",
-      outline: "none",
-      minHeight: "120px",
-      resize: "vertical",
-      fontFamily: "inherit",
-      transition: "border-color 0.2s",
-    },
-    button: {
-      padding: "12px 24px",
-      fontSize: "16px",
-      fontWeight: "500",
-      color: "#ffffff",
-      backgroundColor: "#3498db",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer",
-      transition: "background-color 0.2s",
-      marginTop: "10px",
-    },
-    loader: {
-      marginTop: "20px",
-      textAlign: "center",
-      fontWeight: "500",
-      color: "#3498db",
-    },
-    imageContainer: {
-      textAlign: "center",
-      marginTop: "30px",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-    },
-    image: {
-      width: "200px",
-      height: "200px",
-      objectFit: "contain",
-      border: "1px solid #ddd",
-      borderRadius: "8px",
-    },
-    downloadBtn: {
-      display: "inline-block",
-      marginTop: "15px",
-      padding: "10px 20px",
-      backgroundColor: "#2ecc71",
-      color: "#fff",
-      textDecoration: "none",
-      borderRadius: "4px",
-      fontWeight: "500",
-    },
-    saveButton: {
-      display: "inline-block",
-      marginTop: "15px",
-      padding: "10px 20px",
-      backgroundColor: "#2a89d1ff",
-      color: "#fff",
-      textDecoration: "none",
-      borderRadius: "4px",
-      fontWeight: "500",
-    },
-    audio_container: {
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-    }
-  };
 
   const canUseTTS = () => {
     const limit = 3;
@@ -271,6 +186,42 @@ function Upload() {
     }
   };
 
+  const saveDataToDBV2 = async () => {
+    if (!audioBlob) {
+      alert("No audio to save");
+      return;
+    }
+
+    setLoading2(true);
+    setSetsaveButnText("Saving...");
+
+    const formdata = new FormData();
+    formdata.append("title", title);
+    formdata.append("text", textToSpeech);
+    formdata.append("audio", audioBlob);
+    try {
+      const requestOptions = {
+        method: "POST",
+        body: formdata,
+      };
+      console.log("Reques obj: ", requestOptions);
+      await fetch(
+        `${process.env.REACT_APP_BACKENDURL}/tts/store`,
+        requestOptions
+      );
+
+      alert("Saved successfully");
+      navigate("/tts/records");
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading2(false);
+      setSetsaveButnText("Save");
+    }
+
+
+  }
+
 
 
   const getPresignedUrl = async () => {
@@ -354,6 +305,8 @@ function Upload() {
       setSelectedLoading(false);
     }
   }
+
+
   return (
     <div style={styles.container}>
       <Link
@@ -370,6 +323,36 @@ function Upload() {
       >
         TTS Records
       </Link>
+      <div style={{ display: "flex", gap: "10px", float: "right" }}>
+        {currentUserRole === 'ADMIN' && (
+          <Link
+            to="/create-user"
+            style={{
+              textDecoration: "none",
+              background: "#2ecc71",
+              color: "#fff",
+              padding: "10px 20px",
+              borderRadius: "8px",
+            }}
+          >
+            Add New User
+          </Link>
+        )}
+        <button
+          onClick={handleLogout}
+          style={{
+            background: "#e74c3c",
+            color: "#fff",
+            padding: "10px 20px",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "16px"
+          }}
+        >
+          Logout
+        </button>
+      </div>
       <form style={styles.form} onSubmit={handleSubmit}>
         <div style={styles.fieldGroup}>
           <label style={styles.label} htmlFor="title">
@@ -452,7 +435,7 @@ function Upload() {
           </audio>
           <button
             type="button"
-            onClick={(e) => { saveDataToDB() }}
+            onClick={(e) => { saveDataToDBV2() }}
             style={styles.saveButton}
           >
             {saveButnText}
