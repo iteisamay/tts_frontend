@@ -291,13 +291,10 @@ function TtsRecordList() {
 
   }
 
-  const downloadImage = (url, filename) => {
+  const downloadImage = (filename) => {
     const proxyUrl =
       `${process.env.REACT_APP_BACKENDURL}/tts/download-proxy` +
-      `?url=${encodeURIComponent(url)}` +
-      `&filename=${encodeURIComponent(filename)}`;
-
-    // This triggers the browser's native download behavior
+      `?filename=${encodeURIComponent(filename)}`;
     window.location.href = proxyUrl;
   };
 
@@ -534,11 +531,9 @@ function TtsRecordList() {
                           />
                           <button
                             onClick={() => {
-                              const sanitizedTitle = (rec.title || "qr")
-                                .replace(/\s+/g, '_')
-                                .slice(0, 50);
-                              console.log(sanitizedTitle);
-                              downloadImage(rec.qr_url, `${sanitizedTitle}.jpg`);
+                              const sanitizedTitle = (rec.qr_key || "qr").trim()
+                                .replace(/[\\/:*?"<>|]/g, '_')
+                              downloadImage(`${sanitizedTitle}`);
                             }}
                             style={{
                               background: "#2563eb",
@@ -933,7 +928,7 @@ function TtsRecordList() {
               {thumbnailUrl && (
                 <div>
                   <div style={{ width: "50%", margin: "auto 10px" }}>
-                    <img style={{ width: "100%" }} src={`${process.env.REACT_APP_ASSET_URL}/images/${thumbnailUrl}`} />
+                    <img style={{ width: "100%" }} src={`${process.env.REACT_APP_ASSET_URL}/s1/images/${thumbnailUrl}`} />
                   </div>
                   <div>
                     <input type="text" value={metaThumbnailAltText} onChange={(e) => { setMetaThumbnailAltText(e.target.value) }} placeholder="Alt Text" style={styles.updateData.div_input_text} />
