@@ -299,13 +299,15 @@ function TtsRecordList() {
   };
 
   const handleListenSelectedText = async () => {
-    const textarea = updateTextareaRef.current;
-    if (!textarea) return;
+    // const textarea = updateTextareaRef.current;
+    const selectedText = document.getSelection().toString().trim();
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = updateText.substring(start, end);
+    if (!selectedText) return;
 
+    // const start = textarea.selectionStart;
+    // const end = textarea.selectionEnd;
+    // const selectedText = updateText.substring(start, end);
+    console.log(selectedText);
     if (!selectedText || !selectedText.trim()) {
       alert("Please select some text to listen to.");
       return;
