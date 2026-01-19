@@ -4,6 +4,7 @@ import Upload from './pages/Upload';
 import TtsRecordList from './pages/TtsRecordList';
 import Login from './pages/Login';
 import CreateUser from './pages/CreateUser';
+import Usermanagement from './pages/Usermanagement';
 
 const ProtectedRoute = ({ children }) => {
   const currentUser = localStorage.getItem("tts_currentUser");
@@ -27,6 +28,11 @@ function App() {
       <Route path="/tts/records" element={
         <ProtectedRoute>
           <TtsRecordList />
+        </ProtectedRoute>
+      } />
+      <Route path="/tts/user-management" element={
+        <ProtectedRoute>
+          <Usermanagement/>
         </ProtectedRoute>
       } />
 

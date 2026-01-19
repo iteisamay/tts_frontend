@@ -46,6 +46,9 @@ function TtsRecordList() {
   const [metaRowId, setMetaRowId] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [currentUserRole, setCurrentUserRole] = useState(null);
+
+  const [userCred, setUserCred] = useState(null);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -75,6 +78,8 @@ function TtsRecordList() {
       const body = JSON.stringify({
         word: speechWord,
         speech: speechPronunciation,
+        user_code:userCred.user,
+        action:'create'
       });
       const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/add/custom`, {
         method: 'POST',
@@ -89,26 +94,34 @@ function TtsRecordList() {
         setCustomPronunciation(false);
         setSelectCustomAddLoading(false);
       } else {
-        alert(data.error || 'Error adding custom pronunciation');
+        alert(data.msg || 'Error adding new custom pronunciation');
       }
     } catch (err) {
       console.error(err);
       alert('Error adding custom pronunciation');
+    }finally{
+      setSelectCustomAddLoading(false);
     }
   }
 
   const fetchRecords = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/get`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          start_date: startDate || null,
-          end_date: endDate || null,
-          page_length: pageLength,
-          page_number: pageNumber,
-        }),
+      // const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/get`, {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({
+      //     start_date: startDate || null,
+      //     end_date: endDate || null,
+      //     page_length: pageLength,
+      //     page_number: pageNumber,
+      //   }),
+      // });
+      console.log({user_code:userCred.user,action:'view'});
+      const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/get/today`,{
+        method:"POST",
+        body:JSON.stringify({user_code:userCred.user,action:'view'}),
+        headers:{"Content-type":"application/json"}
       });
       const data = await res.json();
       if (res.ok) {
@@ -123,9 +136,21 @@ function TtsRecordList() {
     setLoading(false);
   };
 
+  useEffect(()=>{
+      const userRole=JSON.parse(window.localStorage.getItem("tts_currentUserRole"));
+      const userCode=JSON.parse(window.localStorage.getItem("tts_currentUser"));
+      if(!userCode || userCode.trim()=="" || !userRole || userRole.trim()==""){
+          window.localStorage.removeItem("tts_currentUser");
+          window.localStorage.removeItem("tts_currentUserRole");
+          navigate("/login");
+      }else{
+          setUserCred({user:userCode,role:userRole});
+      }
+  },[]);
+
   useEffect(() => {
     fetchRecords();
-  }, [pageNumber]);
+  }, [pageNumber,userCred]);
 
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= totalPages) {
@@ -201,17 +226,18 @@ function TtsRecordList() {
         body: JSON.stringify({
           title: selectedRecord.title,
           text: updateText,
-          // Using defaults as in backend/Upload.jsx
           voice: "bn-IN-Wavenet-A",
           language: "bn-IN",
           speakingRate: 1.0,
-          pitch: 0.0
+          pitch: 0.0,
+          user_code:userCred.user,
+          action:'create'
         }),
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "Server error");
+        throw new Error(errorData.msg || "Server error");
       }
 
       const blob = await res.blob();
@@ -271,24 +297,33 @@ function TtsRecordList() {
     formdata.append("text", updateText);
     formdata.append("id", selectedAudioPk);
     formdata.append("audio", audioBlob);
+    formdata.append("user_code", userCred.user);
+    formdata.append("action", "edit");
+    // console.log(Object.fromEntries(formdata));
     try {
       const requestOptions = {
         method: "POST",
         body: formdata,
       };
-      await fetch(
+      let res=await fetch(
         `${process.env.REACT_APP_BACKENDURL}/tts/update`,
         requestOptions
       );
-      alert("Audio updated successfully");
+      if(res.ok){
+        alert("Audio file updated.");
+      }
+      else if(res.status==400){
+        res=await res.json();
+        throw new Error(res.msg);
+      }else{
+        throw new Error("Server error. Please try after some time.")
+      }
     } catch (error) {
       alert(error.message);
     } finally {
       setUpdating(false);
       fetchRecords();
     }
-
-
   }
 
   const downloadImage = (filename) => {
@@ -299,15 +334,8 @@ function TtsRecordList() {
   };
 
   const handleListenSelectedText = async () => {
-    // const textarea = updateTextareaRef.current;
     const selectedText = document.getSelection().toString().trim();
-
     if (!selectedText) return;
-
-    // const start = textarea.selectionStart;
-    // const end = textarea.selectionEnd;
-    // const selectedText = updateText.substring(start, end);
-    console.log(selectedText);
     if (!selectedText || !selectedText.trim()) {
       alert("Please select some text to listen to.");
       return;
@@ -315,24 +343,26 @@ function TtsRecordList() {
 
     setSelectedListenLoading(true);
     setSelectedListenUrl(null);
-
-    try {
-      const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/create-speech-only`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+    const reqBody={
           title: "Selected Preview",
           text: selectedText,
           voice: "bn-IN-Wavenet-A",
           language: "bn-IN",
           speakingRate: 1.0,
-          pitch: 0.0
-        }),
+          pitch: 0.0,
+          user_code:userCred.user,
+          action:'create'
+        }
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/create-speech-only`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reqBody),
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "Server error");
+        throw new Error(errorData.msg || "Server error");
       }
 
       const blob = await res.blob();
@@ -341,7 +371,7 @@ function TtsRecordList() {
 
     } catch (err) {
       console.error("Preview error:", err);
-      alert("Preview failed: " + err.message);
+      alert(err.message);
     } finally {
       setSelectedListenLoading(false);
     }
@@ -356,6 +386,24 @@ function TtsRecordList() {
     setMetaThumbnailAltText(rec.thumbnail_alt || "");
     setMetaRowId(rec.tts_id || "");
     setMetaTabVisible(true);
+  }
+
+  const deleteAudio = async (id) => {
+    try {
+      let res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/delete`, {
+        method: "DELETE",
+        body: JSON.stringify({ id, user_code: currentUser }),
+        headers:{"Content-type":"application/json"}
+      });
+      if(res.status===200){
+        let d=await res.json();
+        alert(d.msg);
+        fetchRecords();
+      }
+    } catch (error) {
+      alert(error)
+    }
+
   }
 
   const updateMetaDataByRowId = async () => {
@@ -409,7 +457,21 @@ function TtsRecordList() {
         ➕ Add New TTS Record
       </Link>
       <div style={{ display: "flex", gap: "10px", float: "right" }}>
-        {currentUserRole === 'ADMIN' && (
+        {(currentUserRole === 'SUPERADMIN') && (
+          <Link
+            to="/tts/user-management"
+            style={{
+              textDecoration: "none",
+              background: "#b12831",
+              color: "#fff",
+              padding: "10px 20px",
+              borderRadius: "8px",
+            }}
+          >
+            User Management
+          </Link>
+        )}
+        {(currentUserRole === 'ADMIN' || currentUserRole === 'SUPERADMIN') && (
           <Link
             to="/create-user"
             style={{
@@ -441,7 +503,7 @@ function TtsRecordList() {
 
       <h2 style={{ marginBottom: "15px" }}>TTS Records</h2>
 
-      <div style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
+      {/* <div style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
         <label>Start Date: </label>
         <input
           type="date"
@@ -462,7 +524,7 @@ function TtsRecordList() {
         >
           Filter
         </button>
-      </div>
+      </div> */}
 
       {loading ? (
         <p>Loading data...</p>
@@ -578,6 +640,19 @@ function TtsRecordList() {
                         >
                           Edit Meta
                         </button>
+                        {currentUserRole === 'ADMIN' && (<button
+                          onClick={() => deleteAudio(rec.tts_id)}
+                          style={{
+                            background: "#10b981",
+                            color: "#fff",
+                            border: "none",
+                            padding: "5px 10px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Delete Audio
+                        </button>)}
                       </td>
                     </tr>
                   );
@@ -592,7 +667,7 @@ function TtsRecordList() {
             </tbody>
           </table>
 
-          <div
+          {/* <div
             style={{
               display: "flex",
               justifyContent: "center",
@@ -617,7 +692,7 @@ function TtsRecordList() {
             >
               Next ➡
             </button>
-          </div>
+          </div> */}
         </>
       )}
 

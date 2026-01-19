@@ -9,6 +9,7 @@ function CreateUser() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [role, setRole] = useState("USER"); // Default role
     const [error, setError] = useState("");
+    const [userCred, setUserCred] = useState(null);
     const navigate = useNavigate();
 
     const handleCreateUser = async (e) => {
@@ -24,10 +25,9 @@ function CreateUser() {
             email,
             emp_code: empCode,
             password,
-            user_type: role // Use selected role
+            user_type: role,
+            user_code:userCred.user
         };
-
-        users.push(newUser);
 
         try {
             const response = await fetch(`${process.env.REACT_APP_BACKENDURL}/auth/create/user`, {
@@ -49,6 +49,18 @@ function CreateUser() {
             alert('Registration failed');
         }
     };
+
+    useEffect(()=>{
+        const userRole=JSON.parse(window.localStorage.getItem("tts_currentUserRole"));
+        const userCode=JSON.parse(window.localStorage.getItem("tts_currentUser"));
+        if(!userCode || userCode.trim()=="" || !userRole || userRole.trim()==""){
+            window.localStorage.removeItem("tts_currentUser");
+            window.localStorage.removeItem("tts_currentUserRole");
+            navigate("/login");
+        }else{
+            setUserCred({user:userCode,role:userRole});
+        }
+    },[]);
 
     return (
         <div style={styles.container}>
