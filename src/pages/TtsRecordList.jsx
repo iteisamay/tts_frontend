@@ -579,7 +579,7 @@ function TtsRecordList() {
                       </td>
                       <td>
                         <a
-                          href={`${process.env.REACT_APP_ASSET_URL}/s1/audio/${rec.audio_key}`}
+                          href={`${process.env.REACT_APP_ASSET_URL}/audio/${rec.audio_key}`}
                           target="_blank"
                           rel="noreferrer"
                         >
@@ -589,7 +589,7 @@ function TtsRecordList() {
                       <td style={{ textAlign: "center" }}>
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
                           <img
-                            src={`${process.env.REACT_APP_ASSET_URL}/s1/qr/${rec.qr_key}`}
+                            src={`${process.env.REACT_APP_ASSET_URL}/qr/${rec.qr_key}`}
                             alt={rec.title}
                             style={{ width: "60px", height: "60px", border: "1px solid #ddd", borderRadius: "4px" }}
                           />
@@ -1005,7 +1005,7 @@ function TtsRecordList() {
               {thumbnailUrl && (
                 <div>
                   <div style={{ width: "50%", margin: "auto 10px" }}>
-                    <img style={{ width: "100%" }} src={`${process.env.REACT_APP_ASSET_URL}/s1/images/${thumbnailUrl}`} />
+                    <img style={{ width: "100%" }} src={`${process.env.REACT_APP_ASSET_URL}/images/${thumbnailUrl}`} />
                   </div>
                   <div>
                     <input type="text" value={metaThumbnailAltText} onChange={(e) => { setMetaThumbnailAltText(e.target.value) }} placeholder="Alt Text" style={styles.updateData.div_input_text} />
