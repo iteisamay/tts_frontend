@@ -1,6 +1,6 @@
 export const styles={
     container: {
-      maxWidth: "600px",
+      width: "80%",
       margin: "50px auto",
       padding: "30px",
       backgroundColor: "#ffffff",
@@ -35,13 +35,14 @@ export const styles={
       transition: "border-color 0.2s",
     },
     textarea: {
+      height:"400px",
       padding: "10px 12px",
       fontSize: "16px",
       border: "1px solid #ddd",
       borderRadius: "4px",
       outline: "none",
-      minHeight: "120px",
-      resize: "vertical",
+      // minHeight: "120px",
+      // resize: "vertical",
       fontFamily: "inherit",
       transition: "border-color 0.2s",
     },

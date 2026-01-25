@@ -118,7 +118,8 @@ function TtsRecordList() {
       //   }),
       // });
       console.log({user_code:userCred.user,action:'view'});
-      const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/get/today`,{
+      const url=`${process.env.REACT_APP_BACKENDURL}/tts/get`;
+      const res = await fetch(url,{
         method:"POST",
         body:JSON.stringify({user_code:userCred.user,action:'view'}),
         headers:{"Content-type":"application/json"}

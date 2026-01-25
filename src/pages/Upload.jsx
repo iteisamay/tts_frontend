@@ -83,6 +83,17 @@ function Upload() {
     };
   }, [audioUrl]);
 
+    useEffect(() => {
+      const user = JSON.parse(localStorage.getItem("tts_currentUser"));
+      const role = JSON.parse(localStorage.getItem("tts_currentUserRole"));
+      if (user) {
+        setCurrentUser(user);
+      }
+      if (role) {
+        setCurrentUserRole(role);
+      }
+    }, []);
+
   const canUseTTS = () => {
     const limit = 3;
     const today = new Date().toISOString().split("T")[0];
@@ -112,6 +123,9 @@ function Upload() {
     setAudioBlob(null);
 
     const formData = new FormData(e.target);
+    formData.append("user_code",currentUser);
+    formData.append("action",'create');
+    
     const payload = JSON.stringify(Object.fromEntries(formData));
 
     try {
@@ -199,6 +213,9 @@ function Upload() {
     formdata.append("title", title);
     formdata.append("text", textToSpeech);
     formdata.append("audio", audioBlob);
+    formdata.append("user_code", currentUser);
+    formdata.append("action", "create");
+
     try {
       const requestOptions = {
         method: "POST",
@@ -287,7 +304,7 @@ function Upload() {
         speakingRate: 1.0,
         pitch: 0.0,
       });
-      const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/create-speech-only`, {
+      const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/generate-first`, {
         method: 'POST',
         headers: myHeaders,
         body,
