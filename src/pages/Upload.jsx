@@ -45,6 +45,10 @@ function Upload() {
   };
 
   const addCustomPronunciation = async () => {
+    if(speechWord.trim()==="" || speechPronunciation.trim()===""){
+      alert("Please fill required fields.");
+      return;
+    }
     setSelectCustomAddLoading(true);
     try {
       const myHeaders = new Headers();
@@ -52,6 +56,8 @@ function Upload() {
       const body = JSON.stringify({
         word: speechWord,
         speech: speechPronunciation,
+        action:"create",
+        user_code:currentUser
       });
       const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/add/custom`, {
         method: 'POST',
@@ -303,8 +309,10 @@ function Upload() {
         language: 'bn-IN',
         speakingRate: 1.0,
         pitch: 0.0,
+        user_code:currentUser,
+        action:"create"
       });
-      const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/generate-first`, {
+      const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/create-speech-only`, {
         method: 'POST',
         headers: myHeaders,
         body,
