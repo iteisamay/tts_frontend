@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { styles } from "../style/style";
+import ElevenLabsData from "../components/ElevenLabsData";
 
 function TtsRecordList() {
   const [records, setRecords] = useState([]);
@@ -48,7 +49,8 @@ function TtsRecordList() {
   const [currentUserRole, setCurrentUserRole] = useState(null);
 
   const [userCred, setUserCred] = useState(null);
-  
+  const[googleLlmSelected,setGoogleLlmSelected]=useState(false);
+  const[llmNum,setLlmNum]=useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -78,8 +80,8 @@ function TtsRecordList() {
       const body = JSON.stringify({
         word: speechWord,
         speech: speechPronunciation,
-        user_code:userCred.user,
-        action:'create'
+        user_code: userCred.user,
+        action: 'create'
       });
       const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/add/custom`, {
         method: 'POST',
@@ -99,7 +101,7 @@ function TtsRecordList() {
     } catch (err) {
       console.error(err);
       alert('Error adding custom pronunciation');
-    }finally{
+    } finally {
       setSelectCustomAddLoading(false);
     }
   }
@@ -117,12 +119,12 @@ function TtsRecordList() {
       //     page_number: pageNumber,
       //   }),
       // });
-      console.log({user_code:userCred.user,action:'view'});
-      const url=`${process.env.REACT_APP_BACKENDURL}/tts/get`;
-      const res = await fetch(url,{
-        method:"POST",
-        body:JSON.stringify({user_code:userCred.user,action:'view'}),
-        headers:{"Content-type":"application/json"}
+      console.log({ user_code: userCred.user, action: 'view' });
+      const url = `${process.env.REACT_APP_BACKENDURL}/tts/get`;
+      const res = await fetch(url, {
+        method: "POST",
+        body: JSON.stringify({ user_code: userCred.user, action: 'view' }),
+        headers: { "Content-type": "application/json" }
       });
       const data = await res.json();
       if (res.ok) {
@@ -137,21 +139,21 @@ function TtsRecordList() {
     setLoading(false);
   };
 
-  useEffect(()=>{
-      const userRole=JSON.parse(window.localStorage.getItem("tts_currentUserRole"));
-      const userCode=JSON.parse(window.localStorage.getItem("tts_currentUser"));
-      if(!userCode || userCode.trim()=="" || !userRole || userRole.trim()==""){
-          window.localStorage.removeItem("tts_currentUser");
-          window.localStorage.removeItem("tts_currentUserRole");
-          navigate("/login");
-      }else{
-          setUserCred({user:userCode,role:userRole});
-      }
-  },[]);
+  useEffect(() => {
+    const userRole = JSON.parse(window.localStorage.getItem("tts_currentUserRole"));
+    const userCode = JSON.parse(window.localStorage.getItem("tts_currentUser"));
+    if (!userCode || userCode.trim() == "" || !userRole || userRole.trim() == "") {
+      window.localStorage.removeItem("tts_currentUser");
+      window.localStorage.removeItem("tts_currentUserRole");
+      navigate("/login");
+    } else {
+      setUserCred({ user: userCode, role: userRole });
+    }
+  }, []);
 
   useEffect(() => {
     fetchRecords();
-  }, [pageNumber,userCred]);
+  }, [pageNumber, userCred]);
 
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= totalPages) {
@@ -216,6 +218,10 @@ function TtsRecordList() {
       alert("Minimum 10 characters required");
       return;
     }
+    if(!llmNum || llmNum===0){
+      alert("Please select a llm.");
+      return;
+    }
 
     setPreviewLoading(true);
     setPreviewAudioUrl(null);
@@ -227,12 +233,9 @@ function TtsRecordList() {
         body: JSON.stringify({
           title: selectedRecord.title,
           text: updateText,
-          voice: "bn-IN-Wavenet-A",
-          language: "bn-IN",
-          speakingRate: 1.0,
-          pitch: 0.0,
-          user_code:userCred.user,
-          action:'create'
+          user_code: userCred.user,
+          action: 'create',
+          llm_name:llmNum
         }),
       });
 
@@ -306,17 +309,17 @@ function TtsRecordList() {
         method: "POST",
         body: formdata,
       };
-      let res=await fetch(
+      let res = await fetch(
         `${process.env.REACT_APP_BACKENDURL}/tts/update`,
         requestOptions
       );
-      if(res.ok){
+      if (res.ok) {
         alert("Audio file updated.");
       }
-      else if(res.status==400){
-        res=await res.json();
+      else if (res.status == 400) {
+        res = await res.json();
         throw new Error(res.msg);
-      }else{
+      } else {
         throw new Error("Server error. Please try after some time.")
       }
     } catch (error) {
@@ -344,16 +347,16 @@ function TtsRecordList() {
 
     setSelectedListenLoading(true);
     setSelectedListenUrl(null);
-    const reqBody={
-          title: "Selected Preview",
-          text: selectedText,
-          voice: "bn-IN-Wavenet-A",
-          language: "bn-IN",
-          speakingRate: 1.0,
-          pitch: 0.0,
-          user_code:userCred.user,
-          action:'create'
-        }
+    const reqBody = {
+      title: "Selected Preview",
+      text: selectedText,
+      voice: "bn-IN-Wavenet-A",
+      language: "bn-IN",
+      speakingRate: 1.0,
+      pitch: 0.0,
+      user_code: userCred.user,
+      action: 'create'
+    }
     try {
       const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/create-speech-only`, {
         method: "POST",
@@ -394,10 +397,10 @@ function TtsRecordList() {
       let res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/delete`, {
         method: "DELETE",
         body: JSON.stringify({ id, user_code: currentUser }),
-        headers:{"Content-type":"application/json"}
+        headers: { "Content-type": "application/json" }
       });
-      if(res.status===200){
-        let d=await res.json();
+      if (res.status === 200) {
+        let d = await res.json();
         alert(d.msg);
         fetchRecords();
       }
@@ -439,6 +442,17 @@ function TtsRecordList() {
     }
   }
 
+    const handleModelOnchange=(e)=>{
+    let selectllm=parseInt(e.target.value);
+    setLlmNum(selectllm);
+    if(selectllm===1){
+      //show add custom pronounce and listen selected
+      setGoogleLlmSelected(true);
+    }else{
+      //hide custome pronounce and listen selected
+      setGoogleLlmSelected(false);
+    }
+  }
 
 
   return (
@@ -526,7 +540,7 @@ function TtsRecordList() {
           Filter
         </button>
       </div> */}
-
+      <ElevenLabsData />
       {loading ? (
         <p>Loading data...</p>
       ) : (
@@ -828,7 +842,13 @@ function TtsRecordList() {
 
             {/* Main Preview & Selected Listen Section */}
             <div style={{ marginBottom: "20px", padding: "15px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
-
+              <div>
+                <select name="llm_name" id="" style={styles.selectBox} onChange={(e) => handleModelOnchange(e)}>
+                  <option value="0" style={styles.selectBoxOptions}>Select Model</option>
+                  <option value="1" style={styles.selectBoxOptions}>Google LLM</option>
+                  <option value="2" style={styles.selectBoxOptions}>ElevenLab LLM</option>
+                </select>
+              </div>
               {/* Buttons Row */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "15px", flexWrap: "wrap" }}>
                 <button
@@ -850,7 +870,7 @@ function TtsRecordList() {
                   {previewLoading ? "Generating..." : "🔊 Preview Full Audio"}
                 </button>
 
-                <button
+                {googleLlmSelected && <button
                   onClick={handleListenSelectedText}
                   disabled={selectedListenLoading}
                   style={{
@@ -867,8 +887,8 @@ function TtsRecordList() {
                   }}
                 >
                   {selectedListenLoading ? "Generating..." : "🎧 Listen Selected"}
-                </button>
-                <button
+                </button>}
+                {googleLlmSelected && <button
                   onClick={() => setCustomPronunciation(true)}
                   disabled={selectCustomAddLoading}
                   style={{
@@ -885,14 +905,14 @@ function TtsRecordList() {
                   }}
                 >
                   {selectCustomAddLoading ? "Adding..." : "➕ Add Custom Pronunciation"}
-                </button>
+                </button>}
               </div>
 
               {/* Audio Players */}
               <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
 
                 {/* Full Audio Player */}
-                {previewAudioUrl && (
+                {googleLlmSelected && previewAudioUrl && (
                   <div style={{ background: "#e0e7ff", padding: "10px", borderRadius: "4px" }}>
                     <label style={{ display: "block", marginBottom: "5px", fontSize: "12px", fontWeight: "bold", color: "#3730a3" }}>Full Preview:</label>
                     <audio controls style={{ width: "100%", height: "35px" }} key={`full-${previewAudioUrl}`}>
@@ -902,7 +922,7 @@ function TtsRecordList() {
                 )}
 
                 {/* Selected Audio Player */}
-                {selectedListenUrl && (
+                {googleLlmSelected && selectedListenUrl && (
                   <div style={{ background: "#ede9fe", padding: "10px", borderRadius: "4px" }}>
                     <label style={{ display: "block", marginBottom: "5px", fontSize: "12px", fontWeight: "bold", color: "#5b21b6" }}>Selected Text Preview:</label>
                     <audio controls style={{ width: "100%", height: "35px" }} key={`sel-${selectedListenUrl}`} autoPlay>
@@ -912,7 +932,7 @@ function TtsRecordList() {
                 )}
 
                 {/* Selected Audio Player */}
-                {customPronunciation && (
+                {googleLlmSelected && customPronunciation && (
                   <div style={styles.audio_container}>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       <input type="text" placeholder="Word" onChange={(e) => setSpeechWord(e.target.value)} style={styles.input} />

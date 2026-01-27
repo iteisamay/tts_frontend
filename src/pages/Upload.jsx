@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { styles } from '../style/style'
+import ElevenLabsData from "../components/ElevenLabsData";
 function Upload() {
   const [title, setTitle] = useState("");
   const [textToSpeech, setTextToSpeech] = useState("");
@@ -22,7 +23,7 @@ function Upload() {
   const [speechPronunciation, setSpeechPronunciation] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [currentUserRole, setCurrentUserRole] = useState(null);
-
+  const[googleLlmSelected,setGoogleLlmSelected]=useState(false);
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("tts_currentUser"));
     const role = JSON.parse(localStorage.getItem("tts_currentUserRole"));
@@ -153,7 +154,7 @@ function Upload() {
       setAudioUrl(url);
 
     } catch (err) {
-      alert(err.message);
+      alert(err.error);
     } finally {
       setLoading(false);
     }
@@ -221,6 +222,11 @@ function Upload() {
     formdata.append("audio", audioBlob);
     formdata.append("user_code", currentUser);
     formdata.append("action", "create");
+    if(googleLlmSelected){
+      formdata.append("llm_code","google_llm");
+    }else{
+      formdata.append("llm_code","eleven_labs");
+    }
 
     try {
       const requestOptions = {
@@ -290,6 +296,7 @@ function Upload() {
   const handleButtonLeave = (e) => {
     e.currentTarget.style.backgroundColor = "#3498db";
   };
+
   const listenSelected = async (e) => {
     // Get selected text from the textarea
     const selectedText = document.getSelection().toString().trim();
@@ -305,12 +312,13 @@ function Upload() {
       const body = JSON.stringify({
         title: 'Selected Text',
         text: selectedText,
-        voice: 'bn-IN-Wavenet-A',
-        language: 'bn-IN',
-        speakingRate: 1.0,
-        pitch: 0.0,
+        // voice: 'bn-IN-Wavenet-A',
+        // language: 'bn-IN',
+        // speakingRate: 1.0,
+        // pitch: 0.0,
         user_code:currentUser,
-        action:"create"
+        action:"create",
+        llm_name:1
       });
       const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/create-speech-only`, {
         method: 'POST',
@@ -328,6 +336,17 @@ function Upload() {
       alert('Error generating audio');
     } finally {
       setSelectedLoading(false);
+    }
+  }
+
+  const handleModelOnchange=(e)=>{
+    let selectllm=parseInt(e.target.value);
+    if(selectllm===1){
+      //show add custom pronounce and listen selected
+      setGoogleLlmSelected(true);
+    }else{
+      //hide custome pronounce and listen selected
+      setGoogleLlmSelected(false);
     }
   }
 
@@ -378,6 +397,7 @@ function Upload() {
           Logout
         </button>
       </div>
+      <ElevenLabsData/>
       <form style={styles.form} onSubmit={handleSubmit}>
         <div style={styles.fieldGroup}>
           <label style={styles.label} htmlFor="title">
@@ -411,26 +431,33 @@ function Upload() {
             required
           />
         </div>
-        <button
+        <div>
+          <select name="llm_name" id="" style={styles.selectBox} onChange={(e)=>handleModelOnchange(e)}>
+            <option value="0" style={styles.selectBoxOptions}>Select Model</option>
+            <option value="1" style={styles.selectBoxOptions}>Google LLM</option>
+            <option value="2" style={styles.selectBoxOptions}>ElevenLab LLM</option>
+          </select>
+        </div>
+        {googleLlmSelected && <button
           type="button"
           style={styles.button}
           onClick={listenSelected}
         >
           {selectedLoading ? "Generating..." : "Listen selected"}
-        </button>
-        <div style={styles.audio_container}>
+        </button>}
+        {googleLlmSelected && <div style={styles.audio_container}>
           {selectedAudioUrl && <audio controls>
             <source src={selectedAudioUrl} type="audio/mpeg" />
           </audio>}
-        </div>
-        <button
+        </div>}
+        {googleLlmSelected && <button
           type="button"
           style={styles.button}
           onClick={enableCustomInput}
         >
           {selectCustomAddLoading ? "Adding..." : "Add Custom Pronunciation"}
-        </button>
-        <div style={styles.audio_container}>
+        </button>}
+        {googleLlmSelected &&<div style={styles.audio_container}>
           {customPronunciation && <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             <input type="text" placeholder="Word" onChange={(e) => setSpeechWord(e.target.value)} style={styles.input} />
             <input type="text" placeholder="Custom Pronunciation" onChange={(e) => setSpeechPronunciation(e.target.value)} style={styles.input} />
@@ -438,7 +465,7 @@ function Upload() {
               {selectCustomAddLoading ? "Adding..." : "Add Custom Pronunciation"}
             </button>
           </div>}
-        </div>
+        </div>}
         <button
           type="submit"
           style={styles.button}

@@ -159,5 +159,22 @@ export const styles={
             padding:"10px 0px",
             cursor:"pointer"
         }
+    },
+    selectBox:{
+      margin:"10px 0px",
+      width: "100%",
+      padding: "10px 20px",
+      border: "none",
+      fontSize: "16px",
+      background: "#3498db",
+      color: "white",
+      textAlign: "center",
+    },
+    selectBoxOptions:{
+      fontSize: "16px",
+      background: "#3498db",
+      color: "white",
+      textAlign: "center",
     }
+
   };
