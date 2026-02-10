@@ -9,7 +9,7 @@ import Usermanagement from './pages/Usermanagement';
 const ProtectedRoute = ({ children }) => {
   const currentUser = localStorage.getItem("tts_currentUser");
   if (!currentUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/tts/login" replace />;
   }
   return children;
 };
@@ -17,8 +17,9 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/create-user" element={<CreateUser />} />
+      <Route path="/" element={<Navigate to="/tts/login" replace />} />
+      <Route path="/tts/login" element={<Login />} />
+      <Route path="/tts/create-user" element={<CreateUser />} />
 
       <Route path="/tts/upload" element={
         <ProtectedRoute>
@@ -38,7 +39,7 @@ function App() {
 
       {/* Default redirect to login for unknown or root paths specific to this flow, or just let 404 if not handled. 
           For now, maybe redirect root to login or tts/upload */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/tts" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }
