@@ -445,7 +445,8 @@ function TtsRecordList() {
     const handleModelOnchange=(e)=>{
     let selectllm=parseInt(e.target.value);
     setLlmNum(selectllm);
-    if(selectllm===1){
+    console.log(selectllm);
+    if(selectllm===1||selectllm===2){
       //show add custom pronounce and listen selected
       setGoogleLlmSelected(true);
     }else{
@@ -518,28 +519,6 @@ function TtsRecordList() {
 
       <h2 style={{ marginBottom: "15px" }}>TTS Records</h2>
 
-      {/* <div style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
-        <label>Start Date: </label>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          style={{ padding: "5px" }}
-        />
-        <label>End Date: </label>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          style={{ padding: "5px" }}
-        />
-        <button
-          onClick={handleFilter}
-          style={{ padding: "6px 15px", background: "#4b5563", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer" }}
-        >
-          Filter
-        </button>
-      </div> */}
       <ElevenLabsData />
       {loading ? (
         <p>Loading data...</p>
@@ -559,6 +538,7 @@ function TtsRecordList() {
                 <th>Audio URL</th>
                 <th>QR CODE</th>
                 <th>Action</th>
+                <th>TTS Generation Status</th>
               </tr>
             </thead>
             <tbody>
@@ -655,7 +635,7 @@ function TtsRecordList() {
                         >
                           Edit Meta
                         </button>
-                        {currentUserRole === 'ADMIN' && (<button
+                        {currentUserRole === 'SUPERADMIN' && (<button
                           onClick={() => deleteAudio(rec.tts_id)}
                           style={{
                             background: "#10b981",
@@ -669,6 +649,7 @@ function TtsRecordList() {
                           Delete Audio
                         </button>)}
                       </td>
+                      <td>{rec.tts_generated==="YES"?<span style={{color:"green"}}>{rec.tts_generated}</span>:<span style={{color:"red"}}>{rec.tts_generated}</span>}</td>
                     </tr>
                   );
                 })
@@ -682,32 +663,6 @@ function TtsRecordList() {
             </tbody>
           </table>
 
-          {/* <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              marginTop: "20px",
-            }}
-          >
-            <button
-              onClick={() => handlePageChange(pageNumber - 1)}
-              disabled={pageNumber === 1}
-              style={{ padding: "5px 12px" }}
-            >
-              ⬅ Prev
-            </button>
-            <span style={{ margin: "0 15px" }}>
-              Page {pageNumber} of {totalPages}
-            </span>
-            <button
-              onClick={() => handlePageChange(pageNumber + 1)}
-              disabled={pageNumber === totalPages}
-              style={{ padding: "5px 12px" }}
-            >
-              Next ➡
-            </button>
-          </div> */}
         </>
       )}
 
@@ -870,7 +825,7 @@ function TtsRecordList() {
                   {previewLoading ? "Generating..." : "🔊 Preview Full Audio"}
                 </button>
 
-                {googleLlmSelected && <button
+                {googleLlmSelected && llmNum==1 &&<button
                   onClick={handleListenSelectedText}
                   disabled={selectedListenLoading}
                   style={{
@@ -888,7 +843,7 @@ function TtsRecordList() {
                 >
                   {selectedListenLoading ? "Generating..." : "🎧 Listen Selected"}
                 </button>}
-                {googleLlmSelected && <button
+                {googleLlmSelected && llmNum==1 && <button
                   onClick={() => setCustomPronunciation(true)}
                   disabled={selectCustomAddLoading}
                   style={{
