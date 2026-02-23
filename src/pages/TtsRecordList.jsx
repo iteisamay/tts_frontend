@@ -224,7 +224,7 @@ function TtsRecordList() {
     }
 
     setPreviewLoading(true);
-    setPreviewAudioUrl(null);
+    // setPreviewAudioUrl(null);
 
     try {
       const res = await fetch(`${process.env.REACT_APP_BACKENDURL}/tts/create-speech-only`, {
@@ -235,7 +235,8 @@ function TtsRecordList() {
           text: updateText,
           user_code: userCred.user,
           action: 'create',
-          llm_name:llmNum
+          llm_name:llmNum,
+          id:selectedAudioPk
         }),
       });
 
@@ -243,11 +244,14 @@ function TtsRecordList() {
         const errorData = await res.json();
         throw new Error(errorData.msg || "Server error");
       }
+      const resData=await res.json();
+      const msg=resData.msg;
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      setPreviewAudioUrl(url);
-      setAudioBlob(blob);
+      alert(msg);
+      // const blob = await res.blob();
+      // const url = URL.createObjectURL(blob);
+      // setPreviewAudioUrl(url);
+      // setAudioBlob(blob);
 
     } catch (err) {
       console.error("Preview error:", err);
@@ -290,17 +294,17 @@ function TtsRecordList() {
   };
 
   const handleUpdateV2 = async () => {
-    if (!audioBlob) {
-      alert("No audio to save");
-      return;
-    }
+    // if (!audioBlob) {
+    //   alert("No audio to save");
+    //   return;
+    // }
 
     setUpdating(true);
 
     const formdata = new FormData();
     formdata.append("text", updateText);
     formdata.append("id", selectedAudioPk);
-    formdata.append("audio", audioBlob);
+    // formdata.append("audio", audioBlob);
     formdata.append("user_code", userCred.user);
     formdata.append("action", "edit");
     // console.log(Object.fromEntries(formdata));
@@ -649,7 +653,7 @@ function TtsRecordList() {
                           Delete Audio
                         </button>)}
                       </td>
-                      <td>{rec.tts_generated==="YES"?<span style={{color:"green"}}>{rec.tts_generated}</span>:<span style={{color:"red"}}>{rec.tts_generated}</span>}</td>
+                      <td>{rec.tts_generated==="YES"||rec.tts_generated==="COMPLETED"?<span style={{color:"green"}}>{rec.tts_generated}</span>:<span style={{color:"red"}}>{rec.tts_generated}</span>}</td>
                     </tr>
                   );
                 })
@@ -822,7 +826,7 @@ function TtsRecordList() {
                     opacity: (previewLoading || !updateText) ? 0.7 : 1
                   }}
                 >
-                  {previewLoading ? "Generating..." : "🔊 Preview Full Audio"}
+                  {previewLoading ? "Generating..." : "🔊 Generate Full Audio"}
                 </button>
 
                 {googleLlmSelected && llmNum==1 &&<button
@@ -918,7 +922,7 @@ function TtsRecordList() {
               >
                 Cancel
               </button>
-              <button
+              {/* <button
                 onClick={handleUpdateV2}
                 disabled={updating}
                 style={{
@@ -933,7 +937,7 @@ function TtsRecordList() {
                 }}
               >
                 {updating ? "Updating..." : "Finalize & Update"}
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
