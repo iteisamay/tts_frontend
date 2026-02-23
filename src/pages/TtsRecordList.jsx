@@ -583,11 +583,11 @@ function TtsRecordList() {
                       </td>
                       <td style={{ textAlign: "center" }}>
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
-                          <img
+                          {/* <img
                             src={`${process.env.REACT_APP_ASSET_URL}/qr/${rec.qr_key}`}
                             alt={rec.title}
                             style={{ width: "60px", height: "60px", border: "1px solid #ddd", borderRadius: "4px" }}
-                          />
+                          /> */}
                           <button
                             onClick={() => {
                               const sanitizedTitle = (rec.qr_key || "qr").trim()
