@@ -111,7 +111,7 @@ function Usermanagement() {
             <div style={{ display: "flex", gap: "10px", float: "right" }}>
                 {(userCred.role === 'ADMIN' || userCred.role === 'SUPERADMIN') && (
                     <Link
-                        to="/create-user"
+                        to="/tts/create-user"
                         style={{
                             textDecoration: "none",
                             background: "#2ecc71",

@@ -370,7 +370,7 @@ function Upload() {
       <div style={{ display: "flex", gap: "10px", float: "right" }}>
         {currentUserRole === 'ADMIN' && (
           <Link
-            to="/create-user"
+            to="/tts/create-user"
             style={{
               textDecoration: "none",
               background: "#2ecc71",
