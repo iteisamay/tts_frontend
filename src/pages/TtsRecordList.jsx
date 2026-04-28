@@ -49,8 +49,8 @@ function TtsRecordList() {
   const [currentUserRole, setCurrentUserRole] = useState(null);
 
   const [userCred, setUserCred] = useState(null);
-  const[googleLlmSelected,setGoogleLlmSelected]=useState(false);
-  const[llmNum,setLlmNum]=useState(null);
+  const [googleLlmSelected, setGoogleLlmSelected] = useState(false);
+  const [llmNum, setLlmNum] = useState(2);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -218,7 +218,7 @@ function TtsRecordList() {
       alert("Minimum 10 characters required");
       return;
     }
-    if(!llmNum || llmNum===0){
+    if (!llmNum || llmNum === 0) {
       alert("Please select a llm.");
       return;
     }
@@ -235,8 +235,8 @@ function TtsRecordList() {
           text: updateText,
           user_code: userCred.user,
           action: 'create',
-          llm_name:llmNum,
-          id:selectedAudioPk
+          llm_name: llmNum,
+          id: selectedAudioPk
         }),
       });
 
@@ -244,8 +244,8 @@ function TtsRecordList() {
         const errorData = await res.json();
         throw new Error(errorData.msg || "Server error");
       }
-      const resData=await res.json();
-      const msg=resData.msg;
+      const resData = await res.json();
+      const msg = resData.msg;
 
       alert(msg);
       // const blob = await res.blob();
@@ -446,14 +446,14 @@ function TtsRecordList() {
     }
   }
 
-    const handleModelOnchange=(e)=>{
-    let selectllm=parseInt(e.target.value);
+  const handleModelOnchange = (e) => {
+    let selectllm = parseInt(e.target.value);
     setLlmNum(selectllm);
     console.log(selectllm);
-    if(selectllm===1||selectllm===2){
+    if (selectllm === 1 || selectllm === 2) {
       //show add custom pronounce and listen selected
       setGoogleLlmSelected(true);
-    }else{
+    } else {
       //hide custome pronounce and listen selected
       setGoogleLlmSelected(false);
     }
@@ -521,7 +521,27 @@ function TtsRecordList() {
         </button>
       </div>
 
-      <h2 style={{ marginBottom: "15px" }}>TTS Records</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+        <h2 style={{ margin: 0 }}>TTS Records</h2>
+        <button
+          onClick={fetchRecords}
+          disabled={loading}
+          style={{
+            background: "#3b82f6",
+            color: "#fff",
+            padding: "8px 16px",
+            border: "none",
+            borderRadius: "6px",
+            cursor: loading ? "not-allowed" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            opacity: loading ? 0.7 : 1
+          }}
+        >
+          {loading ? "Refreshing..." : "🔄 Refresh"}
+        </button>
+      </div>
 
       <ElevenLabsData />
       {loading ? (
@@ -653,7 +673,7 @@ function TtsRecordList() {
                           Delete Audio
                         </button>)}
                       </td>
-                      <td>{rec.tts_generated==="YES"||rec.tts_generated==="COMPLETED"?<span style={{color:"green"}}>{rec.tts_generated}</span>:<span style={{color:"red"}}>{rec.tts_generated}</span>}</td>
+                      <td>{rec.tts_generated === "YES" || rec.tts_generated === "COMPLETED" ? <span style={{ color: "green" }}>{rec.tts_generated}</span> : <span style={{ color: "red" }}>{rec.tts_generated}</span>}</td>
                     </tr>
                   );
                 })
@@ -802,7 +822,7 @@ function TtsRecordList() {
             {/* Main Preview & Selected Listen Section */}
             <div style={{ marginBottom: "20px", padding: "15px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
               <div>
-                <select name="llm_name" id="" style={styles.selectBox} onChange={(e) => handleModelOnchange(e)}>
+                <select name="llm_name" id="" value={llmNum} style={styles.selectBox} onChange={(e) => handleModelOnchange(e)}>
                   <option value="0" style={styles.selectBoxOptions}>Select Model</option>
                   <option value="1" style={styles.selectBoxOptions}>Google LLM</option>
                   <option value="2" style={styles.selectBoxOptions}>ElevenLab LLM</option>
@@ -829,7 +849,7 @@ function TtsRecordList() {
                   {previewLoading ? "Generating..." : "🔊 Generate Full Audio"}
                 </button>
 
-                {googleLlmSelected && llmNum==1 &&<button
+                {googleLlmSelected && llmNum == 1 && <button
                   onClick={handleListenSelectedText}
                   disabled={selectedListenLoading}
                   style={{
@@ -847,7 +867,7 @@ function TtsRecordList() {
                 >
                   {selectedListenLoading ? "Generating..." : "🎧 Listen Selected"}
                 </button>}
-                {googleLlmSelected && llmNum==1 && <button
+                {googleLlmSelected && llmNum == 1 && <button
                   onClick={() => setCustomPronunciation(true)}
                   disabled={selectCustomAddLoading}
                   style={{
