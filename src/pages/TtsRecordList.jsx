@@ -462,6 +462,7 @@ function TtsRecordList() {
 
   return (
     <div style={{ maxWidth: "1200px", margin: "40px auto", padding: "20px" }}>
+
       <Link
         to="/tts/upload"
         style={{
@@ -477,6 +478,21 @@ function TtsRecordList() {
         ➕ Add New TTS Record
       </Link>
       <div style={{ display: "flex", gap: "10px", float: "right" }}>
+        <button
+          onClick={fetchRecords}
+          disabled={loading}
+          style={{
+            background: "#3b82f6",
+            color: "#fff",
+            padding: "8px 16px",
+            border: "none",
+            borderRadius: "6px",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.7 : 1
+          }}
+        >
+          {loading ? "Refreshing..." : "🔄 Refresh"}
+        </button>
         {(currentUserRole === 'SUPERADMIN') && (
           <Link
             to="/tts/user-management"
@@ -519,9 +535,10 @@ function TtsRecordList() {
         >
           Logout
         </button>
+
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+      {/* <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
         <h2 style={{ margin: 0 }}>TTS Records</h2>
         <button
           onClick={fetchRecords}
@@ -541,7 +558,7 @@ function TtsRecordList() {
         >
           {loading ? "Refreshing..." : "🔄 Refresh"}
         </button>
-      </div>
+      </div> */}
 
       <ElevenLabsData />
       {loading ? (
