@@ -67,7 +67,7 @@ function TtsRecordList() {
   const handleLogout = () => {
     localStorage.removeItem("tts_currentUser");
     localStorage.removeItem("tts_currentUserRole");
-    navigate("/login");
+    navigate("/tts/login");
   };
 
 

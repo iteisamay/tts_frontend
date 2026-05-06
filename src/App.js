@@ -2,7 +2,8 @@ import { Routes, Route, Navigate } from "react-router";
 import './App.css';
 import Upload from './pages/Upload';
 import TtsRecordList from './pages/TtsRecordList';
-import Login from './pages/Login';
+// import Login from './pages/Login';
+import Login from './pages/Login2';
 import CreateUser from './pages/CreateUser';
 import Usermanagement from './pages/Usermanagement';
 
