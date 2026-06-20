@@ -24,6 +24,7 @@ function TtsRecordList() {
   const [fullTextTitle, setFullTextTitle] = useState("");
   const [audioBlob, setAudioBlob] = useState(null);
   const [selectedAudioPk, setSelectedAudioPk] = useState(null);
+  const [reportTabToggle, setReportTabToggle] = useState(false);
 
   // Listen Modal State (Removed) - refactoring to Update Modal
   const [selectedListenUrl, setSelectedListenUrl] = useState(null);
@@ -34,6 +35,8 @@ function TtsRecordList() {
   const [speechWord, setSpeechWord] = useState("");
   const [speechPronunciation, setSpeechPronunciation] = useState("");
   const [selectCustomAddLoading, setSelectCustomAddLoading] = useState(false);
+  const [report_fromdate, setReportFromDate] = useState('2025-01-01');
+  const [report_todate, setReportToDate] = useState('2025-01-01');
 
   //meta details
   const [metaTabVisible, setMetaTabVisible] = useState(false);
@@ -51,6 +54,7 @@ function TtsRecordList() {
   const [userCred, setUserCred] = useState(null);
   const [googleLlmSelected, setGoogleLlmSelected] = useState(false);
   const [llmNum, setLlmNum] = useState(2);
+  const [lang_id, setLangId] = useState(1);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -222,6 +226,10 @@ function TtsRecordList() {
       alert("Please select a llm.");
       return;
     }
+    if (!lang_id || lang_id === 0) {
+      alert("Please select a Language.");
+      return;
+    }
 
     setPreviewLoading(true);
     // setPreviewAudioUrl(null);
@@ -236,6 +244,7 @@ function TtsRecordList() {
           user_code: userCred.user,
           action: 'create',
           llm_name: llmNum,
+          lang_id: lang_id,
           id: selectedAudioPk
         }),
       });
@@ -460,6 +469,45 @@ function TtsRecordList() {
   }
 
 
+  const enableReportTab = () => {
+    setReportTabToggle(!reportTabToggle);
+  }
+
+  const getReport = async () => {
+
+    // Validate dates
+    if (new Date(report_todate) < new Date(report_fromdate)) {
+      alert("To date must be greater than or equal to From date");
+      return;
+    }
+
+    const response = await fetch(
+      `${process.env.REACT_APP_BACKENDURL}/tts/get-report`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fromdate: report_fromdate,
+          todate: report_todate,
+        }),
+      }
+    );
+
+    const blob = await response.blob();
+
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'report.csv';
+
+    document.body.appendChild(a);
+    a.click();
+
+    a.remove();
+  };
   return (
     <div style={{ maxWidth: "1200px", margin: "40px auto", padding: "20px" }}>
 
@@ -521,6 +569,22 @@ function TtsRecordList() {
             Add New User
           </Link>
         )}
+        {(currentUserRole === 'ADMIN' || currentUserRole === 'SUPERADMIN') && (
+          <button
+            onClick={enableReportTab}
+            style={{
+              background: "#6cfbc2",
+              color: "#fff",
+              padding: "10px 20px",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "16px"
+            }}
+          >
+            Report
+          </button>
+        )}
         <button
           onClick={handleLogout}
           style={{
@@ -538,27 +602,32 @@ function TtsRecordList() {
 
       </div>
 
-      {/* <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-        <h2 style={{ margin: 0 }}>TTS Records</h2>
-        <button
-          onClick={fetchRecords}
-          disabled={loading}
-          style={{
-            background: "#3b82f6",
-            color: "#fff",
-            padding: "8px 16px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: loading ? "not-allowed" : "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "5px",
-            opacity: loading ? 0.7 : 1
-          }}
-        >
-          {loading ? "Refreshing..." : "🔄 Refresh"}
-        </button>
-      </div> */}
+      {reportTabToggle && (
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
+          <div style={{ marginRight: "40px" }}>
+            <label htmlFor="fromdate" style={{ marginRight: "10px" }}>From Date</label>
+            <input type="date" name="fromdate" id="fromdate" value={report_fromdate} onChange={(e) => { setReportFromDate(e.target.value) }} />
+          </div>
+          <div style={{ marginRight: "20px" }}>
+            <label htmlFor="todate" style={{ marginRight: "10px" }}>To Date</label>
+            <input type="date" name="todate" id="todate" value={report_todate} onChange={(e) => { setReportToDate(e.target.value) }} />
+          </div>
+          <div>
+            <button
+              onClick={getReport}
+              style={{
+                background: "#a948f3",
+                color: "#fff",
+                padding: "10px 20px",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "16px"
+              }}
+            >Get Report
+            </button></div>
+        </div>
+      )}
 
       <ElevenLabsData />
       {loading ? (
@@ -843,6 +912,17 @@ function TtsRecordList() {
                   <option value="0" style={styles.selectBoxOptions}>Select Model</option>
                   <option value="1" style={styles.selectBoxOptions}>Google LLM</option>
                   <option value="2" style={styles.selectBoxOptions}>ElevenLab LLM</option>
+                </select>
+              </div>
+              <div>
+                <select name="language" id="" value={lang_id} style={styles.selectBox} onChange={(e) => setLangId(e.target.value)}>
+                  <option value="0" style={styles.selectBoxOptions}>Select Language </option>
+                  <option value="1" style={styles.selectBoxOptions}>Language : Bengali, Male</option>
+                  <option value="2" style={styles.selectBoxOptions}>Language : Bengali, Female</option>
+                  <option value="3" style={styles.selectBoxOptions}>Language : English, Male</option>
+                  <option value="4" style={styles.selectBoxOptions}>Language : English, Female</option>
+                  <option value="5" style={styles.selectBoxOptions}>Language : Hindi, Male</option>
+                  <option value="6" style={styles.selectBoxOptions}>Language : Hindi, Female</option>
                 </select>
               </div>
               {/* Buttons Row */}
